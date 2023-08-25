@@ -1,0 +1,2 @@
+from autoglossary.glossary import Glossary
+from autoglossary.link_inserter import GlossaryLinkInserter
