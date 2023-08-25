@@ -51,6 +51,7 @@ class LayoutCollector:
         content = cleaned[start: end]
 
         return DocumentLayout(
+            title=title,
             number=number,
             date=date,
             author=author,

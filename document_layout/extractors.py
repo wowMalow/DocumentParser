@@ -7,6 +7,7 @@ from document_linker.pattern_handler import PatternHandler
 
 
 class DocumentLayout(NamedTuple):
+        title: str
         number: str
         date: str
         author: str
