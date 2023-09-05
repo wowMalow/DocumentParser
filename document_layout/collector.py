@@ -1,6 +1,7 @@
 import re
 
 from document_layout.extractors import (
+    BaseExtractor,
     TitleExtractor,
     NumberExtractor,
     DateExtractor,
@@ -12,19 +13,24 @@ from document_layout.extractors import (
 
 class LayoutCollector:
     def collect_data(self, text: str) -> DocumentLayout:
-        cleaned = self._clean_html(text)
+        cleaned = BaseExtractor._clean_html(text)
 
         title = TitleExtractor()(cleaned)
         number = NumberExtractor()(cleaned)
         date = DateExtractor()(cleaned)
-        author = AuthorExtractor()(cleaned)
+        authors = AuthorExtractor()(cleaned)
         body_content = BodyExtractor()(cleaned)
+        
+        recipient = None
+        author_position = None
 
         start = body_content.start
         end = body_content.end
 
         number_or_date = number or date
         if number_or_date:
+            recipient = cleaned[start: number_or_date.start]
+            recipient = BaseExtractor._remove_tags(recipient)
             start = number_or_date.start
 
         if number:
@@ -41,11 +47,26 @@ class LayoutCollector:
                 start = title.end
             title = title.content
 
-        if author:
-            if author.start > start:
-                end = author.start
-                author = author.content
+        if authors:
+            if isinstance(authors, list):
+                author, executor = authors
+                if author.start > start:
+                    author_position = re.split(r"<p><br/>\s*</p>", cleaned[:author.start]).pop()
+                    end = author.start - len(author_position)
+                    
+                    author = author.content
+                    executor = executor.content
+                    author_position = BaseExtractor._remove_tags(author_position)
+                else:
+                    author = None
+                    executor = None
             else:
+                executor = authors
+                if executor.start > start:
+                    end = executor.start
+                    executor = executor.content
+                else:
+                    executor = None
                 author = None
 
         content = cleaned[start: end]
@@ -54,23 +75,12 @@ class LayoutCollector:
             title=title,
             number=number,
             date=date,
+            recipient=recipient,
             author=author,
+            author_position=author_position,
+            executor=executor,
             content=self._create_page(content),
         )
-
-    def _clean_html(self, text: str) -> str:
-        cleaned = re.sub('&#160;', ' ', text)
-        cleaned = re.sub(r'<(p|table|tr|div).*?>', r'<\1>', cleaned)
-        cleaned = re.sub(r'<font.*?>', '', cleaned)
-        cleaned = re.sub(r'</font>', '', cleaned)
-        cleaned = re.sub(r'<img.*?/>', '', cleaned)
-        cleaned = re.sub(r'<a.*?>', '', cleaned)
-        cleaned = re.sub(r'</a>', '', cleaned)
-        cleaned = re.sub(r'<span.*?>', '', cleaned)
-        cleaned = re.sub(r'</span>', '', cleaned)
-        cleaned = re.sub(r'<hr/>', '', cleaned)
-        cleaned = re.sub(r'(<u>|</u>)', '', cleaned)
-        return cleaned
 
     def _create_page(self, content: str) -> str:
         html_start = """<!DOCTYPE html>

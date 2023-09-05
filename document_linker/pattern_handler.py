@@ -2,6 +2,7 @@ import re
 from typing import List, Union
 
 from document_linker.document_objects import Document, IposChapter
+from document_linker.utils import NUMBER_CHAR
 
 
 class PatternHandler:
@@ -13,15 +14,15 @@ class PatternHandler:
         return sorted(self._find_patterns(text), key=lambda x: -x.link.start)
 
     def _init_patterns(self) -> str:
-        document_regular_pattern = r"((от)*\s*\d{1,2}\.\d{1,2}\.\d{4}\s+(№|N|No|Nо)+\s*[\d\w\-\/]+)"
-        document_regular_pattern_inverse = r"((№|N|No|Nо)+\s*[\d\w\-\/]+\s+(от)*\s*\d{1,2}\.\d{1,2}\.\d{4})"
+        document_regular_pattern = r"((от)*\s*\d{1,2}\.\d{1,2}\.\d{4}\s+" + rf"{NUMBER_CHAR}+\s*[\d\w\-\/]+)"
+        document_regular_pattern_inverse = rf"({NUMBER_CHAR}" + r"+\s*[\d\w\-\/]+\s+(от)*\s*\d{1,2}\.\d{1,2}\.\d{4})"
 
-        short_pattern = r"((№|N|No|Nо)+\s*[\d\w\-\/]+)"
+        short_pattern = rf"({NUMBER_CHAR}+\s*[\d\w\-\/]+)"
 
         months = r"((январ\w*)|(феврал\w*)|(март\w*)|(апрел\w*)|(ма\w*)|(июн\w*)|(июл\w*)|(август\w*)|(сентябр\w*)|(октябр\w*)|(ноябр\w*)|(декабр\w*))"
         worddate_pattern = r"\d{1,2}\s+" + months + r"\s+\d{4}\s*((год\w*)|(г\.))*"
-        document_worddate_pattern = r"(от)?\s*" + worddate_pattern + r"(\s+(№|N|No|Nо)+\s*[\d\w\-\/]+)"
-        document_worddate_pattern_inverse = r"((№|N|No|Nо)+\s*[\d\w\-\/]+)\s+(от)?\s*" + worddate_pattern
+        document_worddate_pattern = rf"(от)?\s*{worddate_pattern}(\s+{NUMBER_CHAR}+\s*[\d\w\-\/]+)"
+        document_worddate_pattern_inverse = rf"({NUMBER_CHAR}+\s*[\d\w\-\/]+)\s+(от)?\s*{worddate_pattern}"
 
         chapter_pattern = r"((раздел\w*)|(пункт\w*)|(п\.+)|(подпункт\w*)|(пп\.+))\s*(\d+[\s,\.и]*)+"
 
@@ -79,7 +80,7 @@ class PatternHandler:
         elif pattern_type == "regular_inverse":
             offset = 0
 
-        number_regex_object = re.search(r"(№|N|No|Nо)+\s*([\d\w\-\/]+)", text[offset:])
+        number_regex_object = re.search(rf"{NUMBER_CHAR}+\s*([\d\w\-\/]+)", text[offset:])
         number = number_regex_object.group(0)
         start_number, end_number = number_regex_object.span()
 
@@ -102,7 +103,7 @@ class PatternHandler:
         return [document]
     
     def _handle_short(self, text: str, pattern_type: str, global_start: int) -> List[Document]:
-        number_regex_object = re.search(r"(№|N|No|Nо)+\s*([\d\w\-\/]+)", text)
+        number_regex_object = re.search(rf"{NUMBER_CHAR}+\s*([\d\w\-\/]+)", text)
         number = number_regex_object.group(0)
         start, end = number_regex_object.span()
         
@@ -136,7 +137,7 @@ class PatternHandler:
         elif pattern_type == "worddate_inverse":
             offset = 0
 
-        number_regex_object = re.search(r"(№|N|No|Nо)+\s*([\d\w\-\/]+)", text[offset:])
+        number_regex_object = re.search(rf"{NUMBER_CHAR}+\s*([\d\w\-\/]+)", text[offset:])
         number = number_regex_object.group(0)
         start_number, end_number = number_regex_object.span()
 

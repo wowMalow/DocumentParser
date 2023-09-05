@@ -1,6 +1,7 @@
 import re
 from abc import ABC, abstractmethod
 from typing import Tuple, Any, Optional
+from document_linker.utils import NUMBER_CHAR
 
 
 class Document:
@@ -20,7 +21,7 @@ class Document:
         return None
     
     def _format_number(self, number: str) -> str:
-        cleaned = re.sub(r'(№|N|No|Nо)\s*', '', number)
+        cleaned = re.sub(rf'{NUMBER_CHAR}\s*', '', number)
         return re.sub(r'\s*', '', cleaned)
 
     def __str__(self) -> str:
