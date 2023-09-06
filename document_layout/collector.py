@@ -21,6 +21,8 @@ class LayoutCollector:
         authors = AuthorExtractor()(cleaned)
         body_content = BodyExtractor()(cleaned)
         
+        author = None
+        executor = None
         recipient = None
         author_position = None
 
